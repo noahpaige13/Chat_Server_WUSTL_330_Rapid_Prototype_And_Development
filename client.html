@@ -1,6 +1,105 @@
 <!DOCTYPE html>
 <html>
+
    <head>
+      <title>Multi-Room Chat Server</title>
+      <style>
+         body{
+            width: 1300px;
+            margin: 0 auto;
+            padding: 0;
+            font:12px/16px Verdana, sans-serif;
+         }
+         div#options{
+            float:left;
+            margin-left: 10px;
+            padding: 10px;
+            border-style: dotted;
+            border-color: #315b96;
+            width: 20%;
+         }
+         div#chat-list{
+            float: right;
+            margin: 0;
+            padding: 10px;
+            border-style: dotted;
+            border-color: #315b96;
+            width:20%;
+            margin-left:20px;
+
+         }
+         div#chat-room{
+            float: right;
+            margin: 0;
+            padding: 10px;
+            border-style: dotted;
+            border-color: #315b96;
+            width:50%;
+         }
+         div#add{
+            float:right;
+            margin-right: 15px;
+            padding: 10px;
+            border-color: white;
+            width:10%;
+         }
+         div#logout{
+            border-color: white;
+            padding: 10px;
+            display:none;
+         }
+         h1{
+            color: #233567;
+            font-size: 30pt;
+            font-family: Arial, Helvetica, sans-serif;
+            text-align: center;
+         }
+         h3{
+            color: #233567;
+         }
+         h2{
+            color: #233567;
+            font-size: 20pt;
+         }
+         h4{
+            color: #315b96;
+            font-size: 10pt;
+         }
+         div#chat-input{
+            display:none;
+         }
+         input[type=text], [type=password] {
+            border-width: thin;
+            border: solid;
+            border-color: #fbc1bc;
+            border-radius: 12px;
+            padding: 10px 10px;
+         }
+         input[type=date], [type=time] {
+            border-width: thin;
+            border: solid;
+            border-color: #fbc1bc;
+            border-radius: 12px;
+            padding: 5px 5px;
+         }
+         button {
+            border-width: thin;
+            border: solid;
+            border-color: #fbc1bc;
+            background-color: #ffdfdf;
+            padding: 5px 5px;
+            border-radius: 12px;    
+            cursor: pointer;
+            color: #315b96;
+         }
+         div#storyfeed{
+            text-align: center;
+         }
+         div#chat-room-name{
+            text-align: center;
+         }
+      </style>
+
       <script src="/socket.io/socket.io.js"></script>
       <script type ="text/javascript">
 
@@ -8,19 +107,66 @@
       socketio.on("message_to_client",function(data) {
          //Append an HR thematic break and the escaped HTML of the new message
          document.getElementById("chatlog").appendChild(document.createElement("hr"));
-         document.getElementById("chatlog").appendChild(document.createTextNode(data['message']));
+         document.getElementById("chatlog").appendChild(document.createTextNode(data['user'] + ": " + data['message']));
       });
-      
+
       function sendMessage(){
-         var msg = document.getElementById("message_input").value;
-         socketio.emit("message_to_server", {message:msg});
+         let user = document.getElementById("username").value;
+         let msg = document.getElementById("message_input").value;
+         socketio.emit("message_to_server", {user:user, message:msg});
+         // clear input box
+         document.getElementById("message_input").value = "";
+      }
+
+      function login(){
+         if (document.getElementById("username").value != ""){
+            document.getElementById("login").style.display = "none";
+            document.getElementById("logout").style.display = "block";
+            document.getElementById("chat-input").style.display = "block";
+            // document.getElementById("create").style.display = "block";
+            // document.getElementById("users").style.display = "block";
+            // document.getElementById("chat").style.display = "block";
+         }
+      }
+
+      function logout(){
+         document.getElementById("login").style.display = "block";
+         document.getElementById("logout").style.display = "none";
+         document.getElementById("chat-input").style.display = "none";
       }
 
       </script>
    </head>
    <body>
-      <input type="text" id="message_input"/>
-      <button onclick="sendMessage()">send</button>
-      <div id="chatlog"></div>
+
+      <h1>Welcome!</h1>
+      <div id="options">
+            <div style="display:none;" id="logout">
+                <h3>Logged in as: </h3><div id="user"></div><br>
+                <button style="margin: 0px 8px;width:90%" id="logout_btn">Log Out</button>
+        
+            </div>
+            <div id="login">
+               <h3>Log In As?</h3>
+                Username: <br><input style ="margin: 8px 0;width:90%" type="text" id="username" placeholder="Username" /><br>
+                <button style="margin: 0px 8px;width:90%" onclick="login()" id="login_btn">Log In</button>
+            </div>
+         
+      </div>
+
+      <div id="chat-list">
+            <h3>Chat List</h3>
+      </div>
+      
+      <div id="chat-room">
+         <br><div id="chat-room-name" style="font-size: 15pt; color: #233567;">Main Lobby</div>
+         <div id="chatlog"></div><br>
+         <div id="chat-input">
+            <input style = "width:80%" type="text" id="message_input"/>
+            <button style = "width: 10%" onclick="sendMessage()">Send</button>
+         </div>
+      </div>
+      
    </body>
+
 </html>

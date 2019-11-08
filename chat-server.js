@@ -24,8 +24,8 @@ io.sockets.on("connection", function(socket){
 	
 	socket.on('message_to_server', function(data) {
 		// This callback runs when the server receives a new message from the client.
-		
+		console.log("user: "+data["user"]);
 		console.log("message: "+data["message"]); // log it to the Node.JS output
-		io.sockets.emit("message_to_client",{message:data["message"] }) // broadcast the message to other users
+		io.sockets.emit("message_to_client",{user:data["user"], message:data["message"] }) // broadcast the message to other users
 	});
 });
