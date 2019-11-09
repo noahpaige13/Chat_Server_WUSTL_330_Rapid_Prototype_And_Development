@@ -19,13 +19,37 @@ app.listen(3456);
 
 // Do the Socket.IO magic:
 var io = socketio.listen(app);
+var rooms = ['main'];
 io.sockets.on("connection", function(socket){
 	// This callback runs when a new Socket.IO connection is established.
-	
+	socket.join(rooms[0]);
 	socket.on('message_to_server', function(data) {
 		// This callback runs when the server receives a new message from the client.
 		console.log("user: "+data["user"]);
 		console.log("message: "+data["message"]); // log it to the Node.JS output
-		io.sockets.emit("message_to_client",{user:data["user"], message:data["message"] }) // broadcast the message to other users
+		
+		socket.room = data["room"];
+		// console.log(socket.room)
+		io.sockets.in(socket.room).emit("message_to_client",{user:data["user"], message:data["message"] }) // broadcast the message to other users
+		
+	});
+
+	socket.on('room_to_server', function(data) {
+		socket.leave(socket.room);
+		socket.join(data['room']);
+		// console.log("Room: "+data["room"]);
+		rooms.push(data["room"]);
+		socket.room = data['room'];
+		
+		io.sockets.emit("room_to_client",{room:data["room"]}) // broadcast the rooms to all users
+	});
+
+	socket.on('changeroom_to_server', function(data) {
+		socket.leave(socket.room);
+		socket.join(data['room']);
+		// console.log("Room: "+data["room"]);
+		socket.room = data['room'];
+
+		io.sockets.emit("changeroom_to_client",{room:data["room"]}) // broadcast the rooms to all users
 	});
 });

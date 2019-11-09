@@ -68,6 +68,10 @@
          div#chat-input{
             display:none;
          }
+         div#add-room{
+            float:right;
+            display: none;
+         }
          input[type=text], [type=password] {
             border-width: thin;
             border: solid;
@@ -98,51 +102,72 @@
          div#chat-room-name{
             text-align: center;
          }
+         /* MODAL */
+         /* The Modal (background) */
+         body {font-family: Arial, Helvetica, sans-serif;}
+
+         button:hover {
+         opacity: 0.8;
+         }
+
+         .container {
+         padding: 16px;
+         }
+
+         span.psw {
+         float: right;
+         padding-top: 16px;
+         }
+
+         /* The Modal (background) */
+         .modal, .modal1 {
+         display: none; /* Hidden by default */
+         position: fixed; /* Stay in place */
+         z-index: 1; /* Sit on top */
+         left: 0;
+         top: 0;
+         width: 100%; /* Full width */
+         height: 100%; /* Full height */
+         overflow: auto; /* Enable scroll if needed */
+         background-color: rgb(0,0,0); /* Fallback color */
+         background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+         padding-top: 60px;
+         }
+
+         /* Modal Content/Box */
+         .modal-content {
+         background-color: #fefefe;
+         margin: 5% auto 15% auto; /* 5% from the top, 15% from the bottom and centered */
+         border: 1px solid #888;
+         width: 40%; /* Could be more or less, depending on screen size */
+         }
+
+         /* The Close Button (x) */
+         .close {
+         position: absolute;
+         right: 25px;
+         top: 0;
+         font-size: 35px;
+         font-weight: bold;
+         }
+
+         .close:hover,
+         .close:focus {
+         cursor: pointer;
+         }
       </style>
 
       <script src="/socket.io/socket.io.js"></script>
-      <script type ="text/javascript">
-
-      var socketio = io.connect();
-      socketio.on("message_to_client",function(data) {
-         //Append an HR thematic break and the escaped HTML of the new message
-         document.getElementById("chatlog").appendChild(document.createElement("hr"));
-         document.getElementById("chatlog").appendChild(document.createTextNode(data['user'] + ": " + data['message']));
-      });
-
-      function sendMessage(){
-         let user = document.getElementById("username").value;
-         let msg = document.getElementById("message_input").value;
-         socketio.emit("message_to_server", {user:user, message:msg});
-         // clear input box
-         document.getElementById("message_input").value = "";
-      }
-
-      function login(){
-         if (document.getElementById("username").value != ""){
-            document.getElementById("login").style.display = "none";
-            document.getElementById("logout").style.display = "block";
-            document.getElementById("chat-input").style.display = "block";
-            // document.getElementById("create").style.display = "block";
-            // document.getElementById("users").style.display = "block";
-            // document.getElementById("chat").style.display = "block";
-         }
-      }
-
-      function logout(){
-         document.getElementById("login").style.display = "block";
-         document.getElementById("logout").style.display = "none";
-         document.getElementById("chat-input").style.display = "none";
-      }
-
-      </script>
+      
    </head>
+
+   
    <body>
 
       <h1>Welcome!</h1>
       <div id="options">
             <div style="display:none;" id="logout">
-                <h3>Logged in as: </h3><div id="user"></div><br>
+                <h3>Logged in as: </h3><div id="user"> </div><br>
                 <button style="margin: 0px 8px;width:90%" id="logout_btn">Log Out</button>
         
             </div>
@@ -155,9 +180,31 @@
       </div>
 
       <div id="chat-list">
-            <h3>Chat List</h3>
-      </div>
+            <div id="add-room">
+               <button id="add-room-btn" onclick="openModal()">Add Room</button>
+            </div>
+            <div style="display: none;" id="add-room-modal" class="modal">
+               <div class="modal-content">
+                     <span class="close">&times;</span>
+                     <div class="container">
+                           <label for="chatname"><b>Chat Room Name: </b></label>
+                           <input style="width: 90%;" id = "chat_room_name" type="text" placeholder="Enter Chat Room Name" name="chat_room_name" required>
+                           <br><br>
       
+         
+                           <label for="pswd "><b>Password (Optional): </b></label>
+                           <input style="width: 90%;" id = "pswd" type="text" placeholder="Enter Password" name="pswd">
+                     </div>
+      
+                     <div class="container" style="background-color:#f1f1f1">
+                     <button id="cancel_btn" onclick = "closeModal()" >Cancel</button>
+                     <button style="float:right" id="create_room" onclick = "addroom(document.getElementById('chat_room_name').value)">Create</button>
+                     </div>
+                  </div>
+            </div>
+            <h3>Chat Room List</h3>
+      </div>
+
       <div id="chat-room">
          <br><div id="chat-room-name" style="font-size: 15pt; color: #233567;">Main Lobby</div>
          <div id="chatlog"></div><br>
@@ -168,5 +215,141 @@
       </div>
       
    </body>
+   <script type ="text/javascript">
+      let roomname = 'main';
+      var socketio = io.connect();
+      socketio.on("message_to_client",function(data) {
+         //Append an HR thematic break and the escaped HTML of the new message
+         console.log('HERE')
+         document.getElementById("chatlog").appendChild(document.createElement("hr"));
+         document.getElementById("chatlog").appendChild(document.createTextNode(data['user'] + ": " + data['message']));
+      });
 
+      socketio.on("room_to_client",function(data) {
+         //Append an HR thematic break and the escaped HTML of the new message
+         document.getElementById('chat-list').appendChild(document.createElement("br"));
+
+         let button = document.createElement('input');
+               button.setAttribute('type','button');
+               button.setAttribute('id', data["room"]);
+               button.setAttribute('value', ' Join' );
+               button.setAttribute('class', data["room"]);
+               button.setAttribute('onclick', 'changeroom(this.id)')
+               button.style.borderColor = "#233567";
+               button.style.textAlign = "center";
+         
+         document.getElementById('chat-list').appendChild(document.createTextNode(data["room"]));
+         document.getElementById('chat-list').appendChild(button);
+      });
+
+      socketio.on("changeroom_to_client",function(data) {
+      });
+
+      function sendMessage(){
+         let user = document.getElementById("username").value;
+         let msg = document.getElementById("message_input").value;
+         console.log("jklnkj" + roomname);
+         socketio.emit("message_to_server", {user:user, message:msg, room:roomname}); 
+         // clear input box;
+         document.getElementById("message_input").value = "";
+      }
+
+      function login(){
+         if (document.getElementById("username").value != ""){
+            
+            document.getElementById("user").innerHTML = document.getElementById("username").value;
+            document.getElementById("login").style.display = "none";
+            document.getElementById("logout").style.display = "block";
+            document.getElementById("chat-input").style.display = "block";
+            document.getElementById("add-room").style.display = "block";
+
+
+            let button = document.createElement('input');
+               button.setAttribute('type','button');
+               button.setAttribute('id', 'main');
+               button.setAttribute('value', ' Join' );
+               button.setAttribute('class', 'main');
+               button.setAttribute('onclick', 'changeroom(this.id)')
+               button.style.borderColor = "#233567";
+               button.style.textAlign = "center";
+         
+            let t = 'Main Lobby';
+            document.getElementById('chat-list').appendChild(document.createTextNode(t));
+            document.getElementById('chat-list').appendChild(button);
+
+            socketio.on ('connection', function(socket){
+               socket.join(roomname);
+            });
+
+
+
+         }
+      }
+
+
+      function logout(){
+         document.getElementById("login").style.display = "block";
+         document.getElementById("logout").style.display = "none";
+         document.getElementById("chat-input").style.display = "none";
+      }
+
+      // ADD MODAL
+      // Get the modal
+      let modal = document.getElementById("add-room-modal");
+
+      // Get the <span> element that closes the modal
+      let span = document.getElementsByClassName("close")[0];
+
+      // When the user clicks on the button, open the modal
+      function openModal() {
+         modal.style.display = "block";
+      }
+
+      function closeModal() {
+         modal.style.display = "none";
+      }
+
+      // When the user clicks on <span> (x), close the modal
+      span.onclick = function() {
+         modal.style.display = "none";
+      }
+
+      // When the user clicks anywhere outside of the modal, close it
+      window.onclick = function(event) {
+         if (event.target == modal) {
+         modal.style.display = "none";
+         }
+      }
+
+      function addroom(newroom) {
+         while(document.getElementById("chatlog").firstChild){
+            document.getElementById("chatlog").removeChild(document.getElementById("chatlog").firstChild);
+         }
+         
+
+         console.log(newroom);
+         roomname = newroom;
+         let rm = document.getElementById('chat_room_name').value;
+         socketio.emit("room_to_server", {room: rm});
+            
+         closeModal();
+         document.getElementById('chat-room-name').innerHTML = newroom;
+      }
+
+      function changeroom(room) {
+         while(document.getElementById("chatlog").firstChild){
+            document.getElementById("chatlog").removeChild(document.getElementById("chatlog").firstChild);
+         }
+
+            roomname = room;
+
+            let rm = document.getElementById('chat_room_name').value;
+            socketio.emit("changeroom_to_server", {room: rm});
+
+            document.getElementById('chat-room-name').innerHTML = room;
+
+            
+      }
+
+      </script>
 </html>
