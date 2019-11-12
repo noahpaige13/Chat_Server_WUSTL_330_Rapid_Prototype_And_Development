@@ -86,7 +86,7 @@
             border-radius: 12px;
             padding: 5px 5px;
          }
-         button {
+         button, input[type=button]{
             border-width: thin;
             border: solid;
             border-color: #fbc1bc;
@@ -168,7 +168,7 @@
       <div id="options">
             <div style="display:none;" id="logout">
                 <h3>Logged in as: </h3><div id="user"> </div><br>
-                <button style="margin: 0px 8px;width:90%" id="logout_btn">Log Out</button>
+                <button style="margin: 0px 8px;width:90%" id="logout_btn" onclick="logout()">Log Out</button>
         
             </div>
             <div id="login">
@@ -176,10 +176,15 @@
                 Username: <br><input style ="margin: 8px 0;width:90%" type="text" id="username" placeholder="Username" /><br>
                 <button style="margin: 0px 8px;width:90%" onclick="login()" id="login_btn">Log In</button>
             </div>
+
+            <div style="display:none;" id="users">
+               <h3>Users in the Room:</h3>
+               <div id="users-list"></div>
+            </div>
          
       </div>
 
-      <div id="chat-list">
+      <div style = display:none; id="chat-list">
             <div id="add-room">
                <button id="add-room-btn" onclick="openModal()">Add Room</button>
             </div>
@@ -203,10 +208,11 @@
                   </div>
             </div>
             <h3>Chat Room List</h3>
+            <div id="chat-room-list"></div>
       </div>
 
-      <div id="chat-room">
-         <br><div id="chat-room-name" style="font-size: 15pt; color: #233567;">Main Lobby</div>
+      <div style="display: none;" id="chat-room">
+         <br><div id="chat-room-name" style="font-size: 15pt; color: #233567;"></div>
          <div id="chatlog"></div><br>
          <div id="chat-input">
             <input style = "width:80%" type="text" id="message_input"/>
@@ -220,69 +226,327 @@
       var socketio = io.connect();
       socketio.on("message_to_client",function(data) {
          //Append an HR thematic break and the escaped HTML of the new message
-         console.log('HERE')
          document.getElementById("chatlog").appendChild(document.createElement("hr"));
          document.getElementById("chatlog").appendChild(document.createTextNode(data['user'] + ": " + data['message']));
+         var currentdate = new Date(); 
+         var datetime = currentdate.getDate() + "/"
+                + (currentdate.getMonth()+1)  + "/" 
+                + currentdate.getFullYear() + " @ "  
+                + currentdate.getHours() + ":"  
+                + currentdate.getMinutes() + ":" 
+                + currentdate.getSeconds();
+         document.getElementById("chatlog").appendChild(document.createElement("br"));
+
+         document.getElementById("chatlog").appendChild(document.createTextNode('\t'+ 'Sent At:' +datetime));
       });
 
-      socketio.on("room_to_client",function(data) {
+      socketio.on("broadcast",function(data) {
          //Append an HR thematic break and the escaped HTML of the new message
-         document.getElementById('chat-list').appendChild(document.createElement("br"));
+         document.getElementById("chatlog").appendChild(document.createElement("hr"));
+         document.getElementById("chatlog").appendChild(document.createTextNode(data["message"]));
+         
+      });
 
-         let button = document.createElement('input');
+      socketio.on("login_to_client",function(data) {
+         while(document.getElementById("chat-room-list").firstChild){
+            document.getElementById("chat-room-list").removeChild(document.getElementById("chat-room-list").firstChild);
+         }
+
+         document.getElementById('chat-room-list').appendChild(document.createElement("br"));
+         for (room in data['rooms']){
+            if(data['rooms'][room]['pass'] == null){
+               let button = document.createElement('input');
                button.setAttribute('type','button');
-               button.setAttribute('id', data["room"]);
+               button.setAttribute('id', room);
                button.setAttribute('value', ' Join' );
-               button.setAttribute('class', data["room"]);
-               button.setAttribute('onclick', 'changeroom(this.id)')
+               button.setAttribute('class', room);
+               button.setAttribute('onclick', 'changeroom(this.id)');
                button.style.borderColor = "#233567";
                button.style.textAlign = "center";
+               let button1 = document.createElement('input');
+               button1.setAttribute('type','button');
+               button1.setAttribute('id', data["room"]);
+               button1.setAttribute('value', ' Delete' );
+               button1.setAttribute('class', data["room"]);
+               button1.setAttribute('onclick', 'deleteroom(this.id)');
+               button1.style.borderColor = "#233567";
+               button1.style.textAlign = "center";
          
-         document.getElementById('chat-list').appendChild(document.createTextNode(data["room"]));
-         document.getElementById('chat-list').appendChild(button);
+               document.getElementById('chat-room-list').appendChild(document.createTextNode(room));
+               document.getElementById('chat-room-list').appendChild(button);
+               document.getElementById('chat-room-list').appendChild(button1);
+
+               document.getElementById('chat-room-list').appendChild(document.createElement("br"));
+            }           
+            else{
+               let pass = document.createElement('input');
+               pass.setAttribute('type', 'text');
+               pass.setAttribute('id', 'pass_guess');
+               // pass.setAttribute('name', 'pass_guess' );
+               console.log(pass.id);
+               
+               // let p = document.getElementById("pass_guess").getAttribute("value")
+
+               let button = document.createElement('input');
+               button.setAttribute('type','button');
+               button.setAttribute('id', room);
+               button.setAttribute('value', ' Join' );
+               button.setAttribute('class', room);
+               button.setAttribute('onclick', 'changeroom_pass(this.id, pass.value)');
+               button.style.borderColor = "#233567";
+               button.style.textAlign = "center";
+               let button1 = document.createElement('input');
+               button1.setAttribute('type','button');
+               button1.setAttribute('id', data["room"]);
+               button1.setAttribute('value', ' Delete' );
+               button1.setAttribute('class', data["room"]);
+               button1.setAttribute('onclick', 'deleteroom(this.id)');
+               button1.style.borderColor = "#233567";
+               button1.style.textAlign = "center";
+
+               document.getElementById('chat-room-list').appendChild(document.createTextNode(room));
+               document.getElementById('chat-room-list').appendChild(pass);
+
+               document.getElementById('chat-room-list').appendChild(button);
+               document.getElementById('chat-room-list').appendChild(button1);
+
+               document.getElementById('chat-room-list').appendChild(document.createElement("br"));
+            }
+         }
+         
       });
 
-      socketio.on("changeroom_to_client",function(data) {
+
+      socketio.on("everyone_to_client",function(data) {
+         //Append an HR thematic break and the escaped HTML of the new message
+         document.getElementById('chat-room-list').appendChild(document.createElement("br"));
+         if(!data["password"]){
+            let button = document.createElement('input');
+            button.setAttribute('type','button');
+            button.setAttribute('id', data["room"]);
+            button.setAttribute('value', ' Join' );
+            button.setAttribute('class', data["room"]);
+            button.setAttribute('onclick', 'changeroom(this.id)');
+            button.style.borderColor = "#233567";
+            button.style.textAlign = "center";
+
+            let button1 = document.createElement('input');
+            button1.setAttribute('type','button');
+            button1.setAttribute('id', data["room"]);
+            button1.setAttribute('value', ' Delete' );
+            button1.setAttribute('class', data["room"]);
+            button1.setAttribute('onclick', 'deleteroom(this.id)');
+            button1.style.borderColor = "#233567";
+            button1.style.textAlign = "center";
+            
+            document.getElementById('chat-room-list').appendChild(document.createTextNode(data["room"]));
+            document.getElementById('chat-room-list').appendChild(button);
+            document.getElementById('chat-room-list').appendChild(button1);
+
+         }
+         else{
+            let pass = document.createElement('input');
+            pass.setAttribute('type', 'text');
+            pass.setAttribute('id', 'pass_guess');
+            // pass.setAttribute('value', 'pass_guess' );
+            console.log(pass.id);
+            
+            let button = document.createElement('input');
+            button.setAttribute('type','button');
+            button.setAttribute('id', data["room"]);
+            button.setAttribute('value', ' Join' );
+            button.setAttribute('class', data["room"]);
+            button.setAttribute('onclick', 'changeroom_pass(this.id, pass.value');
+            button.style.borderColor = "#233567";
+            button.style.textAlign = "center";
+
+            let button1 = document.createElement('input');
+            button1.setAttribute('type','button');
+            button1.setAttribute('id', data["room"]);
+            button1.setAttribute('value', ' Delete' );
+            button1.setAttribute('class', data["room"]);
+            button1.setAttribute('onclick', 'deleteroom(this.id)');
+            button1.style.borderColor = "#233567";
+            button1.style.textAlign = "center";
+
+            document.getElementById('chat-room-list').appendChild(document.createTextNode(data["room"]));
+            document.getElementById('chat-room-list').appendChild(pass);
+
+            document.getElementById('chat-room-list').appendChild(button);
+            document.getElementById('chat-room-list').appendChild(button1);
+
+         }
       });
+
+
+      socketio.on("room_to_client",function(data) {
+
+         //update users list for room
+         while(document.getElementById("users-list").firstChild){
+            document.getElementById("users-list").removeChild(document.getElementById("users-list").firstChild);
+         }
+
+         document.getElementById('users-list').appendChild(document.createElement("br"));
+         for (user in data['userlist']){
+            // console.log(room);
+            let button0 = document.createElement('input');
+            button0.setAttribute('type','button');
+            button0.setAttribute('id', data["userlist"][user]);
+            button0.setAttribute('value', 'Chat' );
+            button0.setAttribute('class', data["userlist"][user]);
+            button0.setAttribute('onclick', 'private_chat(this.id)')
+            button0.style.borderColor = "#233567";
+            button0.style.textAlign = "center";
+            let button = document.createElement('input');
+            button.setAttribute('type','button');
+            button.setAttribute('id', data["userlist"][user]);
+            button.setAttribute('value', 'Kick' );
+            button.setAttribute('class', data["userlist"][user]);
+            button.setAttribute('onclick', 'kick_user(this.id)')
+            button.style.borderColor = "#233567";
+            button.style.textAlign = "center";
+            let button1 = document.createElement('input');
+            button1.setAttribute('type','button');
+            button1.setAttribute('id', data["userlist"][user]);
+            button1.setAttribute('value', 'Ban' );
+            button1.setAttribute('class', data["userlist"][user]);
+            button1.setAttribute('onclick', 'ban_user(this.id)')
+            button1.style.borderColor = "#233567";
+            button1.style.textAlign = "center";
+         
+            document.getElementById('users-list').appendChild(document.createTextNode(data["userlist"][user]));
+            document.getElementById('users-list').appendChild(button0);
+            document.getElementById('users-list').appendChild(button);
+            document.getElementById('users-list').appendChild(button1);
+            document.getElementById('users-list').appendChild(document.createElement("br"));
+         }
+
+         document.getElementById('chat-room-name').innerHTML = data['room'];
+         
+      });
+
+
+      socketio.on("kick_to_client",function(data) {
+
+         //update users list for room
+         while(document.getElementById("users-list").firstChild){
+            document.getElementById("users-list").removeChild(document.getElementById("users-list").firstChild);
+         }
+
+         document.getElementById('users-list').appendChild(document.createElement("br"));
+         for (user in data['userlist']){
+            // console.log(room);
+            let button0 = document.createElement('input');
+            button0.setAttribute('type','button');
+            button0.setAttribute('id', data["userlist"][user]);
+            button0.setAttribute('value', 'Chat' );
+            button0.setAttribute('class', data["userlist"][user]);
+            button0.setAttribute('onclick', 'private_chat(this.id)')
+            button0.style.borderColor = "#233567";
+            button0.style.textAlign = "center";
+            let button = document.createElement('input');
+            button.setAttribute('type','button');
+            button.setAttribute('id', data["userlist"][user]);
+            button.setAttribute('value', 'Kick' );
+            button.setAttribute('class', data["userlist"][user]);
+            button.setAttribute('onclick', 'kick_user(this.id)')
+            button.style.borderColor = "#233567";
+            button.style.textAlign = "center";
+            let button1 = document.createElement('input');
+            button1.setAttribute('type','button');
+            button1.setAttribute('id', data["userlist"][user]);
+            button1.setAttribute('value', 'Ban' );
+            button1.setAttribute('class', data["userlist"][user]);
+            button1.setAttribute('onclick', 'ban_user(this.id)')
+            button1.style.borderColor = "#233567";
+            button1.style.textAlign = "center";
+
+            document.getElementById('users-list').appendChild(document.createTextNode(data["userlist"][user]));
+            document.getElementById('users-list').appendChild(button0);
+            document.getElementById('users-list').appendChild(button);
+            document.getElementById('users-list').appendChild(button1);
+            document.getElementById('users-list').appendChild(document.createElement("br"));
+         }
+
+         document.getElementById('chat-room-name').innerHTML = data['room'];
+         while(document.getElementById("chatlog").firstChild){
+            document.getElementById("chatlog").removeChild(document.getElementById("chatlog").firstChild);
+         }
+      });
+
+
+      socketio.on("room1_to_client",function(data) {
+
+         //update users list for OLD Room
+         while(document.getElementById("users-list").firstChild){
+            document.getElementById("users-list").removeChild(document.getElementById("users-list").firstChild);
+         }
+
+         document.getElementById('users-list').appendChild(document.createElement("br"));
+         for (user in data['olduserlist']){
+            console.log(room);
+            let button0 = document.createElement('input');
+            button0.setAttribute('type','button');
+            button0.setAttribute('id', data["olduserlist"][user]);
+            button0.setAttribute('value', 'Chat' );
+            button0.setAttribute('class', data["olduserlist"][user]);
+            button0.setAttribute('onclick', 'private_chat(this.id)')
+            button0.style.borderColor = "#233567";
+            button0.style.textAlign = "center";
+            let button = document.createElement('input');
+            button.setAttribute('type','button');
+            button.setAttribute('id', data["olduserlist"][user]);
+            button.setAttribute('value', ' Kick' );
+            button.setAttribute('class', data["olduserlist"][user]);
+            button.setAttribute('onclick', 'changeroom(this.id)')
+            button.style.borderColor = "#233567";
+            button.style.textAlign = "center";
+            let button1 = document.createElement('input');
+            button1.setAttribute('type','button');
+            button1.setAttribute('id', data["olduserlist"][user]);
+            button1.setAttribute('value', ' Ban' );
+            button1.setAttribute('class', data["olduserlist"][user]);
+            button1.setAttribute('onclick', 'ban_user(this.id)')
+            button1.style.borderColor = "#233567";
+            button1.style.textAlign = "center";
+         
+            document.getElementById('users-list').appendChild(document.createTextNode(data["olduserlist"][user]));
+            document.getElementById('users-list').appendChild(button0);
+            document.getElementById('users-list').appendChild(button);
+            document.getElementById('users-list').appendChild(button1);
+            document.getElementById('users-list').appendChild(document.createElement("br"));
+         }
+
+
+      });
+
+
+
 
       function sendMessage(){
          let user = document.getElementById("username").value;
          let msg = document.getElementById("message_input").value;
-         console.log("jklnkj" + roomname);
-         socketio.emit("message_to_server", {user:user, message:msg, room:roomname}); 
+         socketio.emit("message_to_server", {user:user, message:msg}); 
          // clear input box;
          document.getElementById("message_input").value = "";
       }
 
       function login(){
          if (document.getElementById("username").value != ""){
-            
+            console.log("logged in")
             document.getElementById("user").innerHTML = document.getElementById("username").value;
             document.getElementById("login").style.display = "none";
             document.getElementById("logout").style.display = "block";
+            document.getElementById("chat-list").style.display = "block";
             document.getElementById("chat-input").style.display = "block";
+            document.getElementById("users").style.display = "block";
             document.getElementById("add-room").style.display = "block";
+            document.getElementById("chat-room").style.display = "block";
 
 
-            let button = document.createElement('input');
-               button.setAttribute('type','button');
-               button.setAttribute('id', 'main');
-               button.setAttribute('value', ' Join' );
-               button.setAttribute('class', 'main');
-               button.setAttribute('onclick', 'changeroom(this.id)')
-               button.style.borderColor = "#233567";
-               button.style.textAlign = "center";
-         
-            let t = 'Main Lobby';
-            document.getElementById('chat-list').appendChild(document.createTextNode(t));
-            document.getElementById('chat-list').appendChild(button);
-
-            socketio.on ('connection', function(socket){
-               socket.join(roomname);
-            });
-
-
-
+            let user = document.getElementById("username").value
+            socketio.emit("login_to_server", {user: user});
+            
          }
       }
 
@@ -291,6 +555,16 @@
          document.getElementById("login").style.display = "block";
          document.getElementById("logout").style.display = "none";
          document.getElementById("chat-input").style.display = "none";
+         document.getElementById("users").style.display = "none";
+         document.getElementById("chat-list").style.display = "none";
+         document.getElementById("chatlog").style.display = "none";
+         document.getElementById("add-room").style.display = "none";
+         document.getElementById("chat-room").style.display = "block";
+
+         let user = document.getElementById("username").value
+         document.getElementById("username").value = '';
+         
+         socketio.emit("logout_to_server", {user: user});
       }
 
       // ADD MODAL
@@ -325,12 +599,14 @@
          while(document.getElementById("chatlog").firstChild){
             document.getElementById("chatlog").removeChild(document.getElementById("chatlog").firstChild);
          }
-         
-
+      
          console.log(newroom);
          roomname = newroom;
          let rm = document.getElementById('chat_room_name').value;
-         socketio.emit("room_to_server", {room: rm});
+         let username = document.getElementById('username').value;
+         let password = document.getElementById('pswd').value;
+
+         socketio.emit("room_to_server", {room: rm, user: username, pass: password});
             
          closeModal();
          document.getElementById('chat-room-name').innerHTML = newroom;
@@ -340,15 +616,46 @@
          while(document.getElementById("chatlog").firstChild){
             document.getElementById("chatlog").removeChild(document.getElementById("chatlog").firstChild);
          }
+         let username = document.getElementById('username').value;
+         socketio.emit("changeroom_to_server", {room: room, user:username,pass_guess:null});            
+      }
 
-            roomname = room;
+      function changeroom_pass(room, pass_guess) {
+         while(document.getElementById("chatlog").firstChild){
+            document.getElementById("chatlog").removeChild(document.getElementById("chatlog").firstChild);
+         }
 
-            let rm = document.getElementById('chat_room_name').value;
-            socketio.emit("changeroom_to_server", {room: rm});
+         // roomname = room;
+         // console.log(pass_id)
+         // let pass_guess = docuemnt.getElementById(pass_id).value;
+         // console.log(pass_guess)
 
-            document.getElementById('chat-room-name').innerHTML = room;
+         let username = document.getElementById('username').value;
+         // let pass_guess = docuemnt.getElementById('pass_id');
+         // let rm = document.getElementById('chat_room_name').value;
+         socketio.emit("changeroom_to_server", {room: room, user:username, pass_guess:pass_guess});            
+      }
 
-            
+      function private_chat(user) {
+         let username = document.getElementById('username').value;
+         socketio.emit("private_chat_to_server", {user: username, other_user: user});
+      }
+
+      function kick_user(user) {
+         let username = document.getElementById('username').value;
+         socketio.emit("kick_to_server", {user: username, other_user:user});
+
+      }
+
+      function ban_user(user) {
+         let username = document.getElementById('username').value;
+         socketio.emit("ban_to_server", {user: username, other_user:user});
+
+      }
+
+      function deleteroom(room) {
+         let username = document.getElementById('username').value;
+         socketio.emit("deleteroom_to_server", {room: room, user:username});
       }
 
       </script>
