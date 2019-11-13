@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang = 'en'>
 
    <head>
       <title>Multi-Room Chat Server</title>
@@ -56,7 +56,7 @@
          }
          h3{
             color: #233567;
-            font-weight: oblique;
+            font-style: oblique;
          }
          h2{
             font-family: Arial, Helvetica, sans-serif;
@@ -195,10 +195,10 @@
                <div class="modal-content">
                      <span class="close">&times;</span>
                      <div class="container">
-                           <label for="chatname"><b>Chat Room Name: </b></label>
+                           <label for="chat_room_name"><b>Chat Room Name: </b></label>
                            <input style="width: 90%;" id = "chat_room_name" type="text" placeholder="Enter Chat Room Name" name="chat_room_name" required>
                            <br><br>
-                           <label for="pswd "><b>Password (Optional): </b></label>
+                           <label for="pswd"><b>Password (Optional): </b></label>
                            <input style="width: 90%;" id = "pswd" type="text" placeholder="Enter Password" name="pswd">
                      </div>
       
@@ -222,10 +222,10 @@
          </div>
       </div>
       
-   </body>
+  
    <script type ="text/javascript">
       let roomname = 'Main Lobby';
-      var socketio = io.connect();
+      let socketio = io.connect();
 
       // SEND MESSAGE
       socketio.on("message_to_client",function(data) {
@@ -550,4 +550,5 @@
          }
       }
       </script>
+   </body>
 </html>
