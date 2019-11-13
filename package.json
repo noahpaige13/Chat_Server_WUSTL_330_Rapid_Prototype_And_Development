@@ -12,6 +12,10 @@
   },
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "mime": "~1.6.0",
+    "socket.io": "~0.9.16"
+  },
   "bugs": {
     "url": "https://github.com/cse330-fall-2019/module6-group-module6-group-455539-458011/issues"
   },
