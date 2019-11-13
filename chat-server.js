@@ -60,7 +60,7 @@ io.sockets.on("connection", function(socket){
 		for (user in users){
 			userlist.push(user);
 		}
-		socket.broadcast.to(socket.room).emit('broadcast', {message: data["user"]+" has left the chat."})
+		socket.broadcast.to(socket.room).emit('broadcast', {message: socket.name+" has left the chat."})
 		io.sockets.to(socket.room).emit("users_to_client",{ userlist:userlist, room: ""});
 	});
 
@@ -114,7 +114,7 @@ io.sockets.on("connection", function(socket){
 					socket.leave(socket.room);
 					socket.join(data['room']);
 					socket.room = data['room'];
-					console.log("joined: " + socket.room)
+					socket.emit("update_chat")
 
 					users[data['user']] = socket.room;
 	
@@ -132,7 +132,9 @@ io.sockets.on("connection", function(socket){
 					socket.broadcast.to(oldroom).emit('broadcast', {message: data["user"]+" has left the chat."})
 					io.sockets.to(socket.room).emit("users_to_client",{userlist:userlist, room: socket.room}) 
 					io.sockets.to(oldroom).emit("oldroom_users_to_client",{olduserlist:olduserlist})
-					// socket.emit("update_chat")
+				}
+				else if(data["pass_guess"] == ''){
+					return;
 				}
 				else{
 					socket.emit('wrong_pass')
@@ -152,7 +154,10 @@ io.sockets.on("connection", function(socket){
 				socket.join(data['room']);
 				socket.room = data['room'];
 
-				console.log("joined: " + socket.room)
+				// if user is not joining the room they are already in, clear the chat log
+				if(oldroom != socket.room){
+					socket.emit("update_chat")
+				}
 
 				users[data['user']] = socket.room;
 
@@ -170,25 +175,29 @@ io.sockets.on("connection", function(socket){
 				socket.broadcast.to(oldroom).emit('broadcast', {message: data["user"]+" has left the chat."})
 				io.sockets.to(socket.room).emit("users_to_client",{userlist:userlist, room:socket.room}) 
 				io.sockets.to(oldroom).emit("oldroom_users_to_client",{olduserlist:olduserlist})
-				io.sockets.to(socket.room).emit("update_chat")
 			}
 		}
 	});
+
 	socket.on('private_chat_to_server', function(data) {
 		let socket_other = io.sockets.sockets[ids[data['other_user']]];
 		let oldroom = socket.room;
 		socket.leave(oldroom);
-		socket.broadcast.to(oldroom).emit('broadcast', {message: data["user"]+" has left the chat."})
 		socket_other.leave(oldroom);
-		socket_other.broadcast.to(socket_other.room).emit('broadcast', {message: data["other_user"]+" has left the chat."})
 
 		socket.room = socket.id + ids[data['other_user']];
 		socket.join(socket.room);
 		socket_other.join(socket.room);
 		socket_other.room = socket.room;
 
+		socket.broadcast.to(socket.room).emit('broadcast', {message: data["user"]+" has joined the chat."})
+		socket_other.broadcast.to(socket_other.room).emit('broadcast', {message: data["other_user"]+" has joined the chat."})
+
 		users[data['user']] = socket.room;
 		users[data['other_user']] = socket.room;
+		
+		socket.emit("update_chat")
+		socket_other.emit("update_chat")
 
 		userlist = [];
 		olduserlist = [];
@@ -200,7 +209,7 @@ io.sockets.on("connection", function(socket){
 				olduserlist.push(user);
 			}
 		}
-		io.sockets.to(socket.room).emit("users_to_client",{userlist:userlist, room:data["user"]+" and " + data["other_user"]}) 
+		io.sockets.to(socket.room).emit("users_to_client",{userlist:null, room:data["user"]+" and " + data["other_user"]}) 
 		io.sockets.to(oldroom).emit("oldroom_users_to_client",{olduserlist:olduserlist})
 
 	});
@@ -283,7 +292,8 @@ io.sockets.on("connection", function(socket){
 					socket_kick.join("Main Lobby");
 					socket_kick.room = "Main Lobby";
 					userlist.push(user);
-					socket.broadcast.to('Main Lobby').emit('broadcast', {message: data["user"]+" has joined the chat."})
+					socket_kick.emit("update_chat");
+					socket_kick.broadcast.to('Main Lobby').emit('broadcast', {message: user+" has joined the chat."})
 				}
 				else if (users[user] == "Main Lobby"){
 					userlist.push(user);

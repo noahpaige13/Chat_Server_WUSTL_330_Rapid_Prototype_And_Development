@@ -175,6 +175,9 @@
 
       <h1>Multi-Room Chat Server</h1>
       <div id="options">
+            <div style="display:none;" id="logout">
+                  <h3>Logged in as: </h3><div id="user"> </div><br>
+            </div>
             <div id="login">
                <h2>Log In As?</h2>
                 Username: <br><input style ="margin: 8px 0;width:90%" type="text" id="username" placeholder="Username" /><br>
@@ -443,9 +446,11 @@
          alert("You cannot delete this room.");
       });
 
-      // socketio.on("update_chat", function(){
-         
-      // });
+      socketio.on("update_chat", function(){
+         while(document.getElementById("chatlog").firstChild){
+            document.getElementById("chatlog").removeChild(document.getElementById("chatlog").firstChild);
+         } 
+      });
       
 
       function sendMessage(){
@@ -459,12 +464,14 @@
       function login(){
          if (document.getElementById("username").value != ""){
             document.getElementById("login").style.display = "none";
+            document.getElementById("logout").style.display = "block";
+            document.getElementById("user").innerHTML = document.getElementById("username").value;
             document.getElementById("chat-list").style.display = "block";
             document.getElementById("chat-input").style.display = "block";
             document.getElementById("users").style.display = "block";
             document.getElementById("add-room").style.display = "block";
             document.getElementById("chat-room").style.display = "block";
-
+            
             let user = document.getElementById("username").value
             socketio.emit("login_to_server", {user: user});
          }
@@ -496,10 +503,6 @@
          }
          console.log(pass_guess);
          socketio.emit("changeroom_to_server", {room: room, user:username, pass_guess:pass_guess});
-
-         while(document.getElementById("chatlog").firstChild){
-            document.getElementById("chatlog").removeChild(document.getElementById("chatlog").firstChild);
-         }
       }
 
       function private_chat(user) {
@@ -521,7 +524,6 @@
 
       function deleteroom(room) {
          let username = document.getElementById('username').value;
-         console.log("del: "+room);
          socketio.emit("deleteroom_to_server", {room: room, user: username});
       }
 
