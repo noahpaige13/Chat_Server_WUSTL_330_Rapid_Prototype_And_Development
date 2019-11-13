@@ -114,20 +114,16 @@
          /* MODAL */
          /* The Modal (background) */
          body {font-family: Arial, Helvetica, sans-serif;}
-
          button:hover {
          opacity: 0.8;
          }
-
          .container {
          padding: 16px;
          }
-
          span.psw {
          float: right;
          padding-top: 16px;
          }
-
          /* The Modal (background) */
          .modal, .modal1 {
          display: none; /* Hidden by default */
@@ -142,7 +138,6 @@
          background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
          padding-top: 60px;
          }
-
          /* Modal Content/Box */
          .modal-content {
          background-color: #fefefe;
@@ -150,7 +145,6 @@
          border: 1px solid #888;
          width: 40%; /* Could be more or less, depending on screen size */
          }
-
          /* The Close Button (x) */
          .close {
          position: absolute;
@@ -159,7 +153,6 @@
          font-size: 35px;
          font-weight: bold;
          }
-
          .close:hover,
          .close:focus {
          cursor: pointer;
@@ -167,10 +160,8 @@
       </style>
 
       <script src="/socket.io/socket.io.js"></script>
-      
    </head>
-
-   
+ 
    <body>
 
       <h1>Multi-Room Chat Server</h1>
@@ -237,6 +228,7 @@
          h.appendChild(m);
          document.getElementById("chatlog").appendChild(h);
 
+         //SEND TIME AND DATE OF MESSAGE
          let currentdate = new Date();
 
          let hour = currentdate.getHours();
@@ -298,17 +290,15 @@
             document.getElementById('chat-room-list').appendChild(button);
 
             //create delete room buttons
-            // if(room != "Main Lobby"){
-               let button1 = document.createElement('input');
-               button1.setAttribute('type','button');
-               button1.setAttribute('id', room);
-               button1.setAttribute('value', 'Delete' );
-               button1.setAttribute('class', room);
-               button1.setAttribute('onclick', 'deleteroom(this.id)');
-               button1.style.textAlign = "center";
-               document.getElementById('chat-room-list').appendChild(button1);
-            // }
-            
+            let button1 = document.createElement('input');
+            button1.setAttribute('type','button');
+            button1.setAttribute('id', room);
+            button1.setAttribute('value', 'Delete' );
+            button1.setAttribute('class', room);
+            button1.setAttribute('onclick', 'deleteroom(this.id)');
+            button1.style.textAlign = "center";
+            document.getElementById('chat-room-list').appendChild(button1);
+
             document.getElementById('chat-room-list').appendChild(document.createElement("br"));
          }
       });
@@ -357,7 +347,7 @@
 
          document.getElementById('users-list').appendChild(document.createElement("br"));
          for (user in data['userlist']){
-            // console.log(room);
+            // ADD PM, KICK, BAN BUTTONS FOR EACH USER
             let button0 = document.createElement('input');
             button0.setAttribute('type','button');
             button0.setAttribute('id', data["userlist"][user]);
@@ -446,12 +436,12 @@
          alert("You cannot delete this room.");
       });
 
+      //CLEARS CHAT LOG
       socketio.on("update_chat", function(){
          while(document.getElementById("chatlog").firstChild){
             document.getElementById("chatlog").removeChild(document.getElementById("chatlog").firstChild);
          } 
       });
-      
 
       function sendMessage(){
          let user = document.getElementById("username").value;
