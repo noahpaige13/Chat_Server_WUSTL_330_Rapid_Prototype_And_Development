@@ -224,7 +224,8 @@ io.sockets.on("connection", function(socket){
 			socket_kick.broadcast.to(socket_kick.room).emit('broadcast', {message: data["other_user"]+" has been kicked out of the chat."})
 			socket_kick.join('Main Lobby');
 			socket_kick.room = 'Main Lobby';
-	
+			socket_kick.emit("update_chat")
+
 			users[data['other_user']] = "Main Lobby";
 	
 			userlist = [];
@@ -256,7 +257,8 @@ io.sockets.on("connection", function(socket){
 			socket_kick.broadcast.to(socket_kick.room).emit('broadcast', {message: data["other_user"]+" has been banned from the chat."})
 			socket_kick.join('Main Lobby');
 			socket_kick.room = 'Main Lobby';
-	
+			socket_kick.emit("update_chat")
+
 			users[data['other_user']] = "Main Lobby";
 	
 			userlist = [];
